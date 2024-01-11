@@ -1,0 +1,1 @@
+kubectl get job --all-namespaces -o json | jq -r '.items[] | select((.status.phase == "Running") and (.metadata.creationTimestamp | fromdateiso8601 > (now - 86400))) | .metadata.namespace + "/" + .metadata.name' | wc -l

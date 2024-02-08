@@ -1,0 +1,20 @@
+kubectl get services -l file=ME423 -o json | jq '.items[] | select(.metadata.creationTimestamp | fromdateiso8601 < (now - 86400)) | .metadata.name' | tr -d '"'
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: service-cleanup
+spec:
+  schedule: "0 0 */2 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cleanup-script
+            image: YOUR_IMAGE_NAME
+            command: ["/bin/sh", "-c"]
+            args:
+            - kubectl get services -l file=ME423 -o json | jq '.items[] | select(.metadata.creationTimestamp | fromdateiso8601 < (now - 86400)) | .metadata.name' | tr -d '"' | xargs -I {} kubectl delete service {}
+          restartPolicy: OnFailure

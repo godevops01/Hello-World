@@ -18,3 +18,35 @@ spec:
             args:
             - kubectl get services -l file=ME423 -o json | jq '.items[] | select(.metadata.creationTimestamp | fromdateiso8601 < (now - 86400)) | .metadata.name' | tr -d '"' | xargs -I {} kubectl delete service {}
           restartPolicy: OnFailure
+
+#!/bin/bash
+
+deleted_svcs=0  # Initialize the counter for deleted services
+
+# Get the list of services to delete
+services=$(kubectl get services -l file=ME423 -o json | jq -r '.items[] | select(.metadata.creationTimestamp | fromdateiso8601 < (now - 86400)) | .metadata.name')
+
+# Calculate the total number of services
+total_services=$(echo "$services" | wc -l)
+
+# Iterate over the services in blocks of 10
+block_size=10
+for ((i = 0; i < total_services; i += block_size)); do
+    # Extract the block of services
+    block=$(echo "$services" | tail -n +$((i + 1)) | head -n $block_size)
+
+    # Delete services in the block and count deleted services
+    echo "Deleting services in block $((i / block_size + 1))..."
+    while read -r svc; do
+        kubectl delete service "$svc"
+        deleted_svcs=$((deleted_svcs + 1))
+    done <<< "$block"
+
+    # Wait for 5 minutes
+    echo "Waiting for 5 minutes..."
+    sleep 300
+done
+
+# Output the total count of deleted services
+echo "Total number of services deleted: $deleted_svcs"
+

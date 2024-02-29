@@ -1,3 +1,8 @@
+lifecycle:
+    preStop:
+      exec:
+        command: ["/bin/sh", "-c", "kubectl delete svc -l app=myapp"]
+
 kubectl get services -l file=ME423 -o json | jq '.items[] | select(.metadata.creationTimestamp | fromdateiso8601 < (now - 86400)) | .metadata.name' | tr -d '"'
 
 ---

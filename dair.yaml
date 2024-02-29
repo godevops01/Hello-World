@@ -21,3 +21,10 @@ job_name:
                 }
               }'
 
+deploy_job:
+  stage: deploy
+  script:
+    - curl -k -u 'admin:admin' -X POST  http://localhost:5516/api/v1/templates/Applications/Release612654/start \
+      -H "Content-Type: application/json" \
+      -d '{"releaseTitle": "My Automated Release", "variables": {"${tier}":["api"]}, \
+           "releaseVariables": {"${version}":"1.0", "${name}": "John"}}'
